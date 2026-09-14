@@ -2395,95 +2395,92 @@ export default function App() {
 
 
       {/* ======================================================
-          MOBILE NAV
+          MOBILE BOTTOM ACTION BAR
           ====================================================== */}
 
-      <nav className="mobile-nav">
+      <nav className="mobile-nav" aria-label="Mobile browser navigation and actions">
 
         <button
-          className={
-            page === "home"
-              ? "active"
-              : ""
-          }
-          onClick={() =>
-            setPage("home")
-          }
+          type="button"
+          className={`mobile-nav-action ${page === "home" ? "active" : ""}`}
+          onClick={() => setPage("home")}
+          title="Home"
+          aria-label="Home"
         >
           <Home />
-          <span>
-            Home
-          </span>
         </button>
 
-
         <button
-          className={
-            page === "search"
-              ? "active"
-              : ""
-          }
-          onClick={() =>
-            setPage("search")
-          }
+          type="button"
+          className={`mobile-nav-action ${page === "search" ? "active" : ""}`}
+          onClick={() => setPage("search")}
+          title="Search"
+          aria-label="Search"
         >
           <Search />
-          <span>
-            Search
-          </span>
         </button>
 
-
         <button
-          className={
-            page === "ai"
-              ? "active ai"
-              : "ai"
-          }
-          onClick={
-            openAI
-          }
+          type="button"
+          className={`mobile-nav-action ${page === "ai" ? "active" : ""}`}
+          onClick={openAI}
+          title="VK AI"
+          aria-label="VK AI"
         >
           <Sparkles />
-          <span>
-            AI
-          </span>
         </button>
 
+        <button
+          type="button"
+          className={`mobile-nav-action ${page === "wallpaper" ? "active" : ""}`}
+          onClick={() => setPage("wallpaper")}
+          title="Wallpaper"
+          aria-label="Wallpaper"
+        >
+          <Wallpaper />
+        </button>
 
         <button
-          className={
-            page ===
-            "bookmarks"
-              ? "active"
-              : ""
-          }
-          onClick={() =>
-            setPage(
-              "bookmarks"
-            )
-          }
+          type="button"
+          className={`mobile-nav-action ${profileOpen ? "active" : ""}`}
+          onClick={() => setProfileOpen((current) => !current)}
+          title="Profile"
+          aria-label="Profile"
+        >
+          <User />
+        </button>
+
+        <button
+          type="button"
+          className={`mobile-nav-action ${page === "bookmarks" ? "active" : ""}`}
+          onClick={() => setPage("bookmarks")}
+          title="Bookmarks"
+          aria-label="Bookmarks"
         >
           <Bookmark />
-          <span>
-            Saved
-          </span>
         </button>
 
-
         <button
-          onClick={
-            createNewTab
-          }
+          type="button"
+          className="mobile-nav-action"
+          onClick={createNewTab}
+          title="New tab"
+          aria-label="New tab"
         >
           <Plus />
-          <span>
-            Tab
-          </span>
+        </button>
+
+        <button
+          type="button"
+          className="mobile-nav-action"
+          onClick={() => setCommandOpen(true)}
+          title="More options"
+          aria-label="More options"
+        >
+          <MoreHorizontal />
         </button>
 
       </nav>
-
 
       {/* ======================================================
           COMMAND CENTER
