@@ -28,7 +28,7 @@ CORS_ORIGINS = [
     x.strip()
     for x in os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:5173",
+        "https://vk-browser-1.vercel.app,http://localhost:5173,http://127.0.0.1:5173",
     ).split(",")
     if x.strip()
 ]
@@ -66,10 +66,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS + [
+    allow_origins=list(dict.fromkeys(CORS_ORIGINS + [
+        "https://vk-browser-1.vercel.app",
         "http://127.0.0.1:5173",
         "http://localhost:5173",
-    ],
+    ])),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -707,3 +708,5 @@ if __name__ == "__main__":
         ),
         reload=True,
     )
+
+
