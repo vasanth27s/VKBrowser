@@ -5971,3 +5971,227 @@ body {
     padding-bottom: 95px;
   }
 }
+
+
+/* ============================================================
+   MOBILE BOTTOM NAVIGATION — FIXED ALIGNMENT
+   ------------------------------------------------------------
+   Added only for mobile/tablet layout.
+   Keeps the existing JSX/actions unchanged and pins the
+   existing .mobile-nav to the bottom as a centered floating bar.
+   ============================================================ */
+
+.mobile-nav {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .app.vk-browser .mobile-nav {
+    position: fixed;
+    left: 50%;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 1200;
+
+    width: min(620px, calc(100vw - 24px));
+    height: 72px;
+
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+
+    padding: 7px;
+
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 40px;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(35, 34, 39, 0.88),
+        rgba(18, 18, 23, 0.91)
+      );
+
+    box-shadow:
+      0 18px 55px rgba(0, 0, 0, 0.48),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+    backdrop-filter: blur(26px) saturate(135%);
+    -webkit-backdrop-filter: blur(26px) saturate(135%);
+
+    overflow: hidden;
+    isolation: isolate;
+
+    padding-bottom:
+      max(7px, calc(7px + env(safe-area-inset-bottom)));
+  }
+
+  .app.vk-browser .mobile-nav::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+
+    border-radius: inherit;
+
+    background:
+      radial-gradient(
+        circle at 15% 50%,
+        rgba(255, 255, 255, 0.055),
+        transparent 24%
+      ),
+      radial-gradient(
+        circle at 85% 50%,
+        rgba(255, 255, 255, 0.04),
+        transparent 24%
+      );
+  }
+
+  .app.vk-browser .mobile-nav button {
+    position: relative;
+
+    width: 100%;
+    min-width: 0;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0;
+    padding: 0;
+
+    border: 0;
+    outline: 0;
+    border-radius: 32px;
+
+    color: rgba(255, 255, 255, 0.78);
+    background: transparent;
+
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+
+    transition:
+      background 160ms ease,
+      color 160ms ease,
+      transform 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .app.vk-browser .mobile-nav button span {
+    display: none;
+  }
+
+  .app.vk-browser .mobile-nav button svg {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+
+    stroke-width: 2.25;
+  }
+
+  .app.vk-browser .mobile-nav button:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.055);
+  }
+
+  .app.vk-browser .mobile-nav button:active {
+    transform: scale(0.91);
+  }
+
+  .app.vk-browser .mobile-nav button.active {
+    color: #ffffff;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.22),
+        rgba(255, 255, 255, 0.105)
+      );
+
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 5px 18px rgba(0, 0, 0, 0.16);
+  }
+
+  .app.vk-browser .mobile-nav button.active svg {
+    stroke-width: 2.55;
+  }
+
+  .app.vk-browser .mobile-nav button.ai {
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  .app.vk-browser .mobile-nav button.ai.active {
+    color: #ffffff;
+  }
+}
+
+/* Smaller phones: keep the exact same five-column alignment,
+   but reduce the outer pill slightly so it never goes off-screen. */
+@media (max-width: 480px) {
+  .app.vk-browser .mobile-nav {
+    left: 50%;
+    bottom: max(9px, env(safe-area-inset-bottom));
+
+    width: calc(100vw - 16px);
+    height: 66px;
+
+    padding: 6px;
+    padding-bottom:
+      max(6px, calc(6px + env(safe-area-inset-bottom)));
+
+    border-radius: 36px;
+  }
+
+  .app.vk-browser .mobile-nav button {
+    height: 54px;
+    border-radius: 29px;
+  }
+
+  .app.vk-browser .mobile-nav button svg {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+  }
+}
+
+/* Very small phones: prevent any horizontal overflow. */
+@media (max-width: 360px) {
+  .app.vk-browser .mobile-nav {
+    width: calc(100vw - 12px);
+    height: 62px;
+    padding: 5px;
+    padding-bottom:
+      max(5px, calc(5px + env(safe-area-inset-bottom)));
+  }
+
+  .app.vk-browser .mobile-nav button {
+    height: 52px;
+  }
+
+  .app.vk-browser .mobile-nav button svg {
+    width: 26px;
+    height: 26px;
+    flex-basis: 26px;
+  }
+}
+
+/* Keep page content above the floating mobile navigation so the
+   last row/button is never hidden behind it. */
+@media (max-width: 900px) {
+  .app.vk-browser .main-content {
+    padding-bottom: 0;
+  }
+
+  .app.vk-browser .home-page,
+  .app.vk-browser .content-page,
+  .app.vk-browser .ai-page {
+    padding-bottom: 110px;
+  }
+
+  .app.vk-browser .wallpaper-page {
+    padding-bottom: 115px;
+  }
+}
