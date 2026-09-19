@@ -6526,3 +6526,766 @@ body {
     display: flex !important;
   }
 }
+
+
+
+/* ============================================================
+   VK BROWSER — FINAL 8-OPTION MOBILE BAR
+   ------------------------------------------------------------
+   Mobile bottom navigation:
+   1. Home
+   2. Ad Blocker
+   3. VPN
+   4. Wallpaper
+   5. Profile
+   6. Bookmarks
+   7. New Tab
+   8. More
+
+   This section intentionally overrides older mobile-nav rules
+   earlier in this stylesheet. It keeps the bar fixed to the
+   viewport and prevents horizontal/vertical drift.
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  html {
+    overflow: hidden !important;
+  }
+
+  body {
+    margin: 0;
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+
+  .app.vk-browser {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    position: relative !important;
+  }
+
+  .app.vk-browser .topbar,
+  .app.vk-browser .browser-toolbar {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Never show the desktop action group on mobile. */
+  .app.vk-browser .topbar-actions {
+    display: none !important;
+  }
+
+  /* Main browser area is the only scrolling region. */
+  .app.vk-browser .browser-body {
+    height: calc(
+      100dvh -
+      var(--topbar-height) -
+      var(--toolbar-height)
+    ) !important;
+
+    min-height: 0 !important;
+    max-height: calc(
+      100dvh -
+      var(--topbar-height) -
+      var(--toolbar-height)
+    ) !important;
+
+    overflow: hidden !important;
+  }
+
+  .app.vk-browser .main-content {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-x: none !important;
+    overscroll-behavior-y: contain !important;
+  }
+
+  /*
+     FINAL MOBILE BAR
+     Exactly eight equal-width slots.
+  */
+  .app.vk-browser .mobile-nav {
+    position: fixed !important;
+
+    left: 6px !important;
+    right: 6px !important;
+    bottom: max(
+      6px,
+      env(safe-area-inset-bottom)
+    ) !important;
+
+    width: auto !important;
+    max-width: none !important;
+
+    height: 70px !important;
+    min-height: 70px !important;
+    max-height: 70px !important;
+
+    margin: 0 !important;
+    padding: 5px !important;
+
+    transform: none !important;
+
+    display: grid !important;
+    grid-template-columns:
+      repeat(8, minmax(0, 1fr)) !important;
+
+    align-items: center !important;
+    justify-items: stretch !important;
+
+    gap: 2px !important;
+
+    box-sizing: border-box !important;
+
+    z-index: 2147483000 !important;
+
+    overflow: hidden !important;
+
+    border: 1px solid rgba(
+      255,
+      255,
+      255,
+      0.12
+    ) !important;
+
+    border-radius: 36px !important;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(29, 30, 38, 0.98),
+        rgba(9, 11, 16, 0.99)
+      ) !important;
+
+    box-shadow:
+      0 18px 55px rgba(0, 0, 0, 0.58),
+      inset 0 1px 0 rgba(
+        255,
+        255,
+        255,
+        0.07
+      ) !important;
+
+    backdrop-filter:
+      blur(30px)
+      saturate(145%) !important;
+
+    -webkit-backdrop-filter:
+      blur(30px)
+      saturate(145%) !important;
+
+    isolation: isolate !important;
+
+    pointer-events: auto !important;
+  }
+
+  .app.vk-browser .mobile-nav::before {
+    content: "" !important;
+
+    position: absolute !important;
+    inset: 0 !important;
+
+    z-index: -1 !important;
+
+    pointer-events: none !important;
+
+    border-radius: inherit !important;
+
+    background:
+      linear-gradient(
+        90deg,
+        rgba(255,255,255,0.025),
+        transparent 35%,
+        transparent 65%,
+        rgba(255,255,255,0.025)
+      ) !important;
+  }
+
+  /*
+     Each of the eight buttons receives exactly one grid cell.
+     Nothing can push another option out of alignment.
+  */
+  .app.vk-browser .mobile-nav-action {
+    position: relative !important;
+
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+
+    height: 58px !important;
+    min-height: 58px !important;
+    max-height: 58px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    flex: none !important;
+
+    box-sizing: border-box !important;
+
+    border: 1px solid transparent !important;
+    border-radius: 28px !important;
+
+    outline: none !important;
+
+    background: transparent !important;
+
+    color: rgba(
+      194,
+      202,
+      224,
+      0.96
+    ) !important;
+
+    cursor: pointer !important;
+
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+
+    transition:
+      background 160ms ease,
+      color 160ms ease,
+      transform 120ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease !important;
+  }
+
+  .app.vk-browser .mobile-nav-action svg {
+    width: 23px !important;
+    height: 23px !important;
+
+    min-width: 23px !important;
+    min-height: 23px !important;
+
+    max-width: 23px !important;
+    max-height: 23px !important;
+
+    flex: 0 0 23px !important;
+
+    display: block !important;
+
+    margin: 0 !important;
+
+    stroke-width: 2.05 !important;
+  }
+
+  .app.vk-browser .mobile-nav-action:hover {
+    color: #ffffff !important;
+    background:
+      rgba(255,255,255,0.055) !important;
+  }
+
+  .app.vk-browser .mobile-nav-action:active {
+    transform: scale(0.90) !important;
+  }
+
+  .app.vk-browser .mobile-nav-action.active {
+    color: #ffffff !important;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255,255,255,0.14),
+        rgba(255,255,255,0.045)
+      ) !important;
+
+    border-color:
+      rgba(255,255,255,0.07) !important;
+
+    box-shadow:
+      inset 0 1px 0 rgba(
+        255,
+        255,
+        255,
+        0.07
+      ),
+      0 5px 16px rgba(
+        0,
+        0,
+        0,
+        0.18
+      ) !important;
+  }
+
+  .app.vk-browser .mobile-nav-action.active svg {
+    stroke-width: 2.3 !important;
+  }
+
+  /*
+     Keep the last page content above the fixed bottom bar.
+     This adds space inside the scrollable page, not to the bar.
+  */
+  .app.vk-browser .home-page,
+  .app.vk-browser .content-page,
+  .app.vk-browser .ai-page,
+  .app.vk-browser .wallpaper-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    padding-bottom:
+      max(
+        125px,
+        calc(
+          115px +
+          env(safe-area-inset-bottom)
+        )
+      ) !important;
+  }
+
+  /*
+     Prevent large desktop widths from causing mobile
+     horizontal overflow.
+  */
+  .app.vk-browser .home-page > *,
+  .app.vk-browser .content-page > *,
+  .app.vk-browser .ai-page > *,
+  .app.vk-browser .wallpaper-page > * {
+    max-width: 100% !important;
+  }
+
+  .app.vk-browser img,
+  .app.vk-browser video,
+  .app.vk-browser canvas,
+  .app.vk-browser iframe {
+    max-width: 100% !important;
+  }
+}
+
+
+/* ============================================================
+   PHONE — 600PX AND BELOW
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+  .app.vk-browser .mobile-nav {
+    left: 4px !important;
+    right: 4px !important;
+
+    bottom: max(
+      4px,
+      env(safe-area-inset-bottom)
+    ) !important;
+
+    height: 68px !important;
+    min-height: 68px !important;
+    max-height: 68px !important;
+
+    padding: 4px !important;
+
+    border-radius: 34px !important;
+  }
+
+  .app.vk-browser .mobile-nav-action {
+    height: 58px !important;
+    min-height: 58px !important;
+    max-height: 58px !important;
+
+    border-radius: 28px !important;
+  }
+
+  .app.vk-browser .mobile-nav-action svg {
+    width: 22px !important;
+    height: 22px !important;
+
+    min-width: 22px !important;
+    min-height: 22px !important;
+
+    max-width: 22px !important;
+    max-height: 22px !important;
+
+    flex-basis: 22px !important;
+  }
+
+  .app.vk-browser .home-page,
+  .app.vk-browser .content-page,
+  .app.vk-browser .ai-page,
+  .app.vk-browser .wallpaper-page {
+    padding-bottom:
+      max(
+        120px,
+        calc(
+          110px +
+          env(safe-area-inset-bottom)
+        )
+      ) !important;
+  }
+}
+
+
+/* ============================================================
+   SMALL PHONE — 430PX AND BELOW
+   ============================================================ */
+
+@media (max-width: 430px) {
+
+  .app.vk-browser .mobile-nav {
+    left: 3px !important;
+    right: 3px !important;
+
+    bottom: max(
+      3px,
+      env(safe-area-inset-bottom)
+    ) !important;
+
+    height: 66px !important;
+    min-height: 66px !important;
+    max-height: 66px !important;
+
+    padding: 4px !important;
+
+    border-radius: 33px !important;
+  }
+
+  .app.vk-browser .mobile-nav-action {
+    height: 56px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+
+    border-radius: 27px !important;
+  }
+
+  .app.vk-browser .mobile-nav-action svg {
+    width: 20px !important;
+    height: 20px !important;
+
+    min-width: 20px !important;
+    min-height: 20px !important;
+
+    max-width: 20px !important;
+    max-height: 20px !important;
+
+    flex-basis: 20px !important;
+  }
+}
+
+
+/* ============================================================
+   VERY SMALL PHONE — 360PX AND BELOW
+   ============================================================ */
+
+@media (max-width: 360px) {
+
+  .app.vk-browser .mobile-nav {
+    left: 2px !important;
+    right: 2px !important;
+
+    bottom: max(
+      2px,
+      env(safe-area-inset-bottom)
+    ) !important;
+
+    height: 62px !important;
+    min-height: 62px !important;
+    max-height: 62px !important;
+
+    padding: 3px !important;
+
+    border-radius: 31px !important;
+  }
+
+  .app.vk-browser .mobile-nav-action {
+    height: 54px !important;
+    min-height: 54px !important;
+    max-height: 54px !important;
+
+    border-radius: 26px !important;
+  }
+
+  .app.vk-browser .mobile-nav-action svg {
+    width: 18px !important;
+    height: 18px !important;
+
+    min-width: 18px !important;
+    min-height: 18px !important;
+
+    max-width: 18px !important;
+    max-height: 18px !important;
+
+    flex-basis: 18px !important;
+  }
+}
+
+
+/* ============================================================
+   LANDSCAPE PHONES
+   ============================================================ */
+
+@media (max-width: 900px) and (orientation: landscape) {
+
+  .app.vk-browser .mobile-nav {
+    left: 10px !important;
+    right: 10px !important;
+
+    bottom: max(
+      5px,
+      env(safe-area-inset-bottom)
+    ) !important;
+
+    height: 58px !important;
+    min-height: 58px !important;
+    max-height: 58px !important;
+
+    padding: 3px !important;
+
+    border-radius: 30px !important;
+  }
+
+  .app.vk-browser .mobile-nav-action {
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+
+    border-radius: 25px !important;
+  }
+
+  .app.vk-browser .mobile-nav-action svg {
+    width: 19px !important;
+    height: 19px !important;
+
+    min-width: 19px !important;
+    min-height: 19px !important;
+
+    max-width: 19px !important;
+    max-height: 19px !important;
+
+    flex-basis: 19px !important;
+  }
+}
+
+
+/* ============================================================
+   DESKTOP — NEVER SHOW MOBILE BAR
+   ============================================================ */
+
+@media (min-width: 901px) {
+
+  .app.vk-browser .mobile-nav {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .app.vk-browser .topbar-actions {
+    display: flex !important;
+  }
+}
+
+
+/* ============================================================
+   REMOVE OLD AI-SPECIFIC MOBILE LABEL STYLING
+   ------------------------------------------------------------
+   The mobile bar itself contains no AI-specific layout slot.
+   These rules also prevent an accidental text label from
+   stretching a mobile navigation cell.
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+  .app.vk-browser .mobile-nav .mobile-nav-label,
+  .app.vk-browser .mobile-nav .ai-label,
+  .app.vk-browser .mobile-nav .vk-ai-label {
+    display: none !important;
+  }
+
+  .app.vk-browser .mobile-nav > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+}
+
+
+/* ============================================================
+   TOUCH / ACCESSIBILITY
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+  .app.vk-browser .mobile-nav-action:focus-visible {
+    outline: 2px solid
+      rgba(94, 231, 255, 0.75) !important;
+
+    outline-offset: -3px !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app.vk-browser .mobile-nav-action {
+      transition: none !important;
+    }
+
+    .app.vk-browser .mobile-nav-action:active {
+      transform: none !important;
+    }
+  }
+}
+
+
+/* ============================================================
+   FINAL VOICE SEARCH FIX
+   ============================================================ */
+.voice-button {
+  position: relative;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.voice-button.is-listening {
+  color: #ffffff !important;
+  background: rgba(99, 102, 241, 0.30) !important;
+  border-color: rgba(129, 140, 248, 0.80) !important;
+  box-shadow:
+    0 0 0 3px rgba(99, 102, 241, 0.12),
+    0 0 20px rgba(99, 102, 241, 0.38) !important;
+}
+
+.voice-listening-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff3b5f;
+  box-shadow: 0 0 10px rgba(255, 59, 95, 0.85);
+  animation: vkVoicePulse 900ms ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes vkVoicePulse {
+  0%, 100% {
+    transform: scale(0.78);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .voice-button {
+    cursor: pointer;
+    -webkit-touch-callout: none;
+  }
+
+  .voice-button:active {
+    transform: scale(0.95);
+  }
+}
+
+
+/* ============================================================
+   VK BROWSER — FINAL VOICE SEARCH FIX
+   ============================================================ */
+
+.voice-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.voice-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.voice-button.listening {
+  color: #ffffff;
+  background: rgba(99, 102, 241, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(99, 102, 241, 0.55),
+    0 0 18px rgba(99, 102, 241, 0.28);
+}
+
+.voice-listening-dot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  right: 6px;
+  top: 6px;
+  border-radius: 50%;
+  background: #ff3b30;
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
+  animation: vkVoicePulse 900ms ease-in-out infinite;
+}
+
+.voice-search-status {
+  width: min(92%, 760px);
+  margin: 8px auto 0;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  background: rgba(99, 102, 241, 0.08);
+  color: rgba(205, 211, 235, 0.9);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+@keyframes vkVoicePulse {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .voice-button {
+    min-width: 46px;
+    min-height: 46px;
+  }
+
+  .voice-listening-dot {
+    right: 7px;
+    top: 7px;
+  }
+
+  .voice-search-status {
+    width: calc(100% - 32px);
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-listening-dot {
+    animation: none;
+  }
+}
