@@ -3443,9 +3443,7 @@ function SecurityPage({
                 <span className="chatgpt-online-dot" />
               </div>
 
-              <p className="settings-note">
-                This web version can filter known ad/tracker destinations and search results. It cannot remove every advertisement from a third-party website after that website is opened in the normal browser.
-              </p>
+             
             </>
           ) : (
             <>
@@ -3469,9 +3467,7 @@ function SecurityPage({
                 <span className="chatgpt-online-dot" />
               </div>
 
-              <p className="settings-note">
-                A website cannot create a device-wide VPN tunnel by itself. For real encrypted traffic routing, connect a VPN provider or your device's VPN service.
-              </p>
+
             </>
           )}
         </div>
