@@ -12,12 +12,9 @@ import {
   ArrowRight,
   Bookmark,
   BookmarkCheck,
-  Bot,
-  Brain,
   Check,
   ChevronDown,
   Clock3,
-  Copy,
   Download,
   ExternalLink,
   FileImage,
@@ -37,11 +34,9 @@ import {
   Plus,
   RefreshCw,
   Search,
-  Send,
   Settings,
   Shield,
   ShieldCheck,
-  Sparkles,
   Smartphone,
   Sun,
   Tablet,
@@ -56,7 +51,6 @@ import {
 import {
   searchWeb,
   resolveUrl,
-  aiChat,
 } from "./api";
 
 import {
@@ -77,16 +71,6 @@ import {
 
 const DEFAULT_ENGINE = "DuckDuckGo";
 
-const AI_PROVIDERS = [
-  {
-    id: "openai",
-    name: "VK Ai",
-    description: "OpenAI-powered assistant",
-    icon: Bot,
-    color: "green",
-    model: "gpt-5.6-sol",
-  },
-];
 
 const DEFAULT_WALLPAPER =
   "linear-gradient(135deg,#05070d 0%,#090d18 50%,#05070d 100%)";
@@ -110,11 +94,6 @@ const QUICK_SITES = [
     url: "https://www.google.com",
     letter: "G",
     iconUrl: "https://cdn.simpleicons.org/google/4285f4",
-  },
-  {
-    name: "ChatGPT",
-    url: "https://chatgpt.com",
-    letter: "AI",
   },
   {
     name: "Gmail",
@@ -144,10 +123,10 @@ const QUICK_SITES = [
 
 const FUTURE_FEATURES = [
   {
-    title: "AI Search",
+    title: "Smart Ad Blocking",
     description:
-      "Search the web and ask AI from one intelligent command center.",
-    icon: Brain,
+      "Reduce common advertising and tracking destinations while you browse.",
+    icon: ShieldCheck,
   },
   {
     title: "Private by Design",
@@ -164,7 +143,7 @@ const FUTURE_FEATURES = [
   {
     title: "Personal Space",
     description:
-      "Wallpaper, widgets, bookmarks and AI preferences stay on your browser.",
+      "Wallpaper, widgets, bookmarks and security preferences stay on your browser.",
     icon: Palette,
   },
 ];
@@ -250,32 +229,20 @@ export default function App() {
   );
 
   /* ----------------------------------------------------------
-     AI
+     SECURITY
      ---------------------------------------------------------- */
 
-  const [aiProvider, setAiProvider] = useState(() =>
-    load("aiProvider", "openai")
+  const [adBlocker, setAdBlocker] = useState(() =>
+    load("adBlocker", true)
   );
 
-  const [aiModel, setAiModel] = useState(() =>
-    load("aiModel", "gpt-5.6-sol")
+  const [vpnConnected, setVpnConnected] = useState(() =>
+    load("vpnConnected", false)
   );
 
-  const [aiMessages, setAiMessages] = useState(() =>
-    load("aiMessages", [])
+  const [blockedAds, setBlockedAds] = useState(() =>
+    Number(load("blockedAds", 0))
   );
-
-  const [aiInput, setAiInput] = useState("");
-
-  const [aiLoading, setAiLoading] = useState(false);
-
-  const [aiMenuOpen, setAiMenuOpen] = useState(false);
-
-  const [aiCopiedId, setAiCopiedId] = useState(null);
-
-  const [aiVoice, setAiVoice] = useState(false);
-
-  const [aiTemperature, setAiTemperature] = useState(0.7);
 
   /* ----------------------------------------------------------
      UI
@@ -290,8 +257,6 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false);
 
   const addressInputRef = useRef(null);
-
-  const aiInputRef = useRef(null);
 
   const wallpaperInputRef = useRef(null);
 
@@ -447,16 +412,16 @@ export default function App() {
   }, [wallpaperOpacity]);
 
   useEffect(() => {
-    save("aiProvider", aiProvider);
-  }, [aiProvider]);
+    save("adBlocker", adBlocker);
+  }, [adBlocker]);
 
   useEffect(() => {
-    save("aiModel", aiModel);
-  }, [aiModel]);
+    save("vpnConnected", vpnConnected);
+  }, [vpnConnected]);
 
   useEffect(() => {
-    save("aiMessages", aiMessages);
-  }, [aiMessages]);
+    save("blockedAds", blockedAds);
+  }, [blockedAds]);
 
 
   /* ==========================================================
@@ -520,15 +485,6 @@ export default function App() {
         }, 50);
       }
 
-      if (
-        modifier &&
-        event.shiftKey &&
-        event.key.toLowerCase() === "a"
-      ) {
-        event.preventDefault();
-
-        openAI();
-      }
 
       if (event.key === "Escape") {
         setMobileMenu(false);
@@ -692,6 +648,12 @@ export default function App() {
       return;
     }
 
+    if (adBlocker && isAdOrTrackerUrl(url)) {
+      setBlockedAds((current) => current + 1);
+      showToast("Blocked advertising/tracking destination", "info");
+      return;
+    }
+
     try {
       const resolved =
         await resolveUrl(url);
@@ -773,9 +735,16 @@ export default function App() {
       const data =
         await searchWeb(clean);
 
-      setResults(
-        data.results || []
-      );
+      const rawResults = data.results || [];
+      const filteredResults = adBlocker
+        ? rawResults.filter((result) => {
+            if (!isAdOrTrackerUrl(result?.url)) return true;
+            setBlockedAds((current) => current + 1);
+            return false;
+          })
+        : rawResults;
+
+      setResults(filteredResults);
 
       recordHistory(
         `search:${clean}`,
@@ -805,10 +774,12 @@ export default function App() {
   }
 
 
-  function submitHomeSearch(event) {
-    event.preventDefault();
+  function submitHomeSearch(event, overrideValue = null) {
+    event?.preventDefault?.();
 
-    const value = query.trim();
+    const value = String(
+      overrideValue ?? query
+    ).trim();
 
     if (!value) {
       return;
@@ -889,316 +860,74 @@ export default function App() {
 
 
   /* ==========================================================
-     OPEN AI
+     SECURITY FEATURES
      ========================================================== */
 
-  function openAI() {
-    setPage("ai");
+  function isAdOrTrackerUrl(value) {
+    if (!value) return false;
 
-    setMobileMenu(false);
+    const normalized = String(value).toLowerCase();
 
-    setTimeout(() => {
-      aiInputRef.current?.focus();
-    }, 100);
-  }
-
-
-  /* ==========================================================
-     AI PROVIDER
-     ========================================================== */
-
-  function selectAIProvider(provider) {
-    setAiProvider(provider.id);
-
-    setAiModel(
-      provider.model
-    );
-
-    setAiMenuOpen(false);
-
-    showToast(
-      `${provider.name} selected`
-    );
-  }
-
-
-  const activeAIProvider =
-    AI_PROVIDERS.find(
-      (item) =>
-        item.id === aiProvider
-    ) ||
-    AI_PROVIDERS[0];
-
-
-  /* ==========================================================
-     AI NEW CHAT
-     ========================================================== */
-
-  function newAIChat() {
-    setAiMessages([]);
-
-    setAiInput("");
-
-    showToast(
-      "New AI conversation"
-    );
-
-    setTimeout(() => {
-      aiInputRef.current?.focus();
-    }, 50);
-  }
-
-
-  /* ==========================================================
-     AI SEND
-     ========================================================== */
-
-  async function sendAIMessage(
-    event
-  ) {
-    event?.preventDefault();
-
-    const text =
-      aiInput.trim();
-
-    if (!text || aiLoading) {
-      return;
-    }
-
-    const userMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: text,
-      createdAt:
-        Date.now(),
-    };
-
-    const conversation = [
-      ...aiMessages,
-      userMessage,
+    const blockedPatterns = [
+      "doubleclick.net",
+      "googlesyndication.com",
+      "googleadservices.com",
+      "adservice.google.com",
+      "googletagmanager.com",
+      "googletagservices.com",
+      "adnxs.com",
+      "adsrvr.org",
+      "taboola.com",
+      "outbrain.com",
+      "scorecardresearch.com",
+      "quantserve.com",
+      "criteo.com",
+      "amazon-adsystem.com",
+      "advertising.com",
+      "zedo.com",
+      "moatads.com",
+      "adsafeprotected.com",
+      "pagead2.googlesyndication.com",
     ];
 
-    setAiMessages(
-      conversation
+    return blockedPatterns.some((pattern) =>
+      normalized.includes(pattern)
     );
-
-    setAiInput("");
-
-    setAiLoading(true);
-
-    try {
-      /*
-        The API key MUST stay on your backend.
-        Never put OpenAI/Groq/etc. keys in React.
-      */
-
-      const response =
-        await aiChat({
-          messages:
-            conversation.map(
-              (message) => ({
-                role:
-                  message.role,
-                content:
-                  message.content,
-              })
-            ),
-          temperature:
-            aiTemperature,
-        });
-
-      const assistantText =
-        response?.message ||
-        response?.content ||
-        response?.answer ||
-        "I couldn't generate a response.";
-
-      const assistantMessage = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content:
-          assistantText,
-        createdAt:
-          Date.now(),
-      };
-
-      setAiMessages(
-        (current) => [
-          ...current,
-          assistantMessage,
-        ]
-      );
-
-      if (
-        aiVoice &&
-        "speechSynthesis" in window
-      ) {
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(
-          new SpeechSynthesisUtterance(
-            assistantText
-          )
-        );
-      }
-    } catch (error) {
-      /*
-        If the backend AI endpoint has
-        not been configured yet, show a
-        useful setup message rather than
-        crashing the interface.
-      */
-
-      const fallback =
-        "VK AI interface is ready. Connect an VK AI API key in the FastAPI backend to receive live model responses.";
-
-      setAiMessages(
-        (current) => [
-          ...current,
-          {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content: fallback,
-            createdAt:
-              Date.now(),
-            error: true,
-          },
-        ]
-      );
-    } finally {
-      setAiLoading(false);
-
-      setTimeout(() => {
-        aiInputRef.current?.focus();
-      }, 50);
-    }
   }
 
-
-  /* ==========================================================
-     AI COPY
-     ========================================================== */
-
-  async function copyAIMessage(
-    message
-  ) {
-    try {
-      await navigator.clipboard.writeText(
-        message.content
-      );
-
-      setAiCopiedId(
-        message.id
-      );
-
-      setTimeout(() => {
-        setAiCopiedId(null);
-      }, 1500);
-    } catch {
+  function toggleAdBlocker() {
+    setAdBlocker((current) => {
+      const next = !current;
       showToast(
-        "Copy failed",
-        "error"
+        next ? "Ad blocker enabled" : "Ad blocker disabled",
+        next ? "success" : "info"
       );
-    }
+      return next;
+    });
   }
 
+  function toggleVPN() {
+    setVpnConnected((current) => {
+      const next = !current;
 
-  /* ==========================================================
-     AI REGENERATE
-     ========================================================== */
-
-  async function regenerateAI() {
-    if (aiLoading) {
-      return;
-    }
-
-    const previousUser =
-      [...aiMessages]
-        .reverse()
-        .find(
-          (item) =>
-            item.role === "user"
+      if (next) {
+        showToast(
+          "VPN control enabled — a real VPN tunnel requires a device VPN/provider",
+          "info"
         );
-
-    if (!previousUser) {
-      return;
-    }
-
-    const withoutLastAssistant =
-      [...aiMessages];
-
-    const lastIndex =
-      withoutLastAssistant.length -
-      1;
-
-    if (
-      withoutLastAssistant[
-        lastIndex
-      ]?.role === "assistant"
-    ) {
-      withoutLastAssistant.pop();
-    }
-
-    setAiMessages(
-      withoutLastAssistant
-    );
-
-    setAiInput(
-      previousUser.content
-    );
-
-    setTimeout(() => {
-      sendAIMessage();
-    }, 50);
-  }
-
-
-  /* ==========================================================
-     AI VOICE UI
-     ========================================================== */
-
-  function toggleVoice() {
-    const next = !aiVoice;
-
-    setAiVoice(next);
-
-    if (!next) {
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
+      } else {
+        showToast("VPN control disabled", "info");
       }
 
-      showToast("Voice mode disabled");
-      return;
-    }
-
-    const latestAssistant =
-      [...aiMessages]
-        .reverse()
-        .find(
-          (item) =>
-            item.role === "assistant" &&
-            !item.error
-        );
-
-    if (
-      latestAssistant &&
-      "speechSynthesis" in window
-    ) {
-      window.speechSynthesis.cancel();
-
-      window.speechSynthesis.speak(
-        new SpeechSynthesisUtterance(
-          latestAssistant.content
-        )
-      );
-
-      showToast(
-        "Reading the latest VK AI response"
-      );
-    } else {
-      showToast("Voice mode enabled");
-    }
+      return next;
+    });
   }
 
+  function openSecurityPage(kind = "adblock") {
+    setPage(kind);
+    setMobileMenu(false);
+    setCommandOpen(false);
+  }
 
   /* ==========================================================
      WALLPAPER
@@ -1398,12 +1127,18 @@ export default function App() {
 
   const commands = [
     {
-      id: "ai",
-      title: "Open VK AI",
-      description:
-        "Ask questions using your built-in AI workspace.",
-      icon: Brain,
-      action: openAI,
+      id: "adblock",
+      title: "Ad blocker",
+      description: "Turn advertising and tracker filtering on or off.",
+      icon: ShieldCheck,
+      action: () => openSecurityPage("adblock"),
+    },
+    {
+      id: "vpn",
+      title: "VPN control",
+      description: "Open VPN privacy controls and connection guidance.",
+      icon: Lock,
+      action: () => openSecurityPage("vpn"),
     },
     {
       id: "wallpaper",
@@ -1601,21 +1336,11 @@ export default function App() {
             removeWallpaper={
               removeWallpaper
             }
-            aiProvider={
-              aiProvider
-            }
-            setAiProvider={
-              setAiProvider
-            }
-            aiModel={
-              aiModel
-            }
-            setAiModel={
-              setAiModel
-            }
-            onOpenAI={
-              openAI
-            }
+            adBlocker={adBlocker}
+            setAdBlocker={setAdBlocker}
+            vpnConnected={vpnConnected}
+            setVpnConnected={setVpnConnected}
+            blockedAds={blockedAds}
           />
         );
 
@@ -1647,60 +1372,31 @@ export default function App() {
           />
         );
 
-      case "ai":
+      case "adblock":
         return (
-          <AIPage
-            provider={
-              activeAIProvider
-            }
-            model={
-              aiModel
-            }
-            setModel={
-              setAiModel
-            }
-            messages={
-              aiMessages
-            }
-            input={
-              aiInput
-            }
-            setInput={
-              setAiInput
-            }
-            loading={
-              aiLoading
-            }
-            onSubmit={
-              sendAIMessage
-            }
-            onNewChat={
-              newAIChat
-            }
-            onCopy={
-              copyAIMessage
-            }
-            copiedId={
-              aiCopiedId
-            }
-            onRegenerate={
-              regenerateAI
-            }
-            voice={
-              aiVoice
-            }
-            toggleVoice={
-              toggleVoice
-            }
-            inputRef={
-              aiInputRef
-            }
-            temperature={
-              aiTemperature
-            }
-            setTemperature={
-              setAiTemperature
-            }
+          <SecurityPage
+            mode="adblock"
+            adBlocker={adBlocker}
+            setAdBlocker={setAdBlocker}
+            vpnConnected={vpnConnected}
+            setVpnConnected={setVpnConnected}
+            blockedAds={blockedAds}
+            onToggleAdBlocker={toggleAdBlocker}
+            onToggleVPN={toggleVPN}
+          />
+        );
+
+      case "vpn":
+        return (
+          <SecurityPage
+            mode="vpn"
+            adBlocker={adBlocker}
+            setAdBlocker={setAdBlocker}
+            vpnConnected={vpnConnected}
+            setVpnConnected={setVpnConnected}
+            blockedAds={blockedAds}
+            onToggleAdBlocker={toggleAdBlocker}
+            onToggleVPN={toggleVPN}
           />
         );
 
@@ -1722,7 +1418,7 @@ export default function App() {
                 url
               )
             }
-            onAI={openAI}
+            setPageFromHome={setPage}
             onWallpaper={() =>
               setPage("wallpaper")
             }
@@ -1913,13 +1609,23 @@ export default function App() {
           <div className="topbar-actions">
 
             <button
-              className="icon-button"
-              onClick={
-                openAI
-              }
-              title="VK AI"
+              className={`icon-button ${adBlocker ? "active" : ""}`}
+              onClick={toggleAdBlocker}
+              title="Ad blocker"
+              aria-label="Ad blocker"
             >
-              <Sparkles
+              <ShieldCheck
+                size={18}
+              />
+            </button>
+
+            <button
+              className={`icon-button ${vpnConnected ? "active" : ""}`}
+              onClick={toggleVPN}
+              title="VPN"
+              aria-label="VPN"
+            >
+              <Lock
                 size={18}
               />
             </button>
@@ -2209,16 +1915,20 @@ export default function App() {
 
 
               <SidebarItem
-                icon={<Sparkles />}
-                label="VK AI"
-                active={
-                  page ===
-                  "ai"
-                }
-                badge="AI"
-                onClick={() => {
-                  openAI();
-                }}
+                icon={<ShieldCheck />}
+                label="Ad Blocker"
+                active={page === "adblock"}
+                badge={adBlocker ? "ON" : "OFF"}
+                onClick={() => openSecurityPage("adblock")}
+              />
+
+
+              <SidebarItem
+                icon={<Lock />}
+                label="VPN"
+                active={page === "vpn"}
+                badge={vpnConnected ? "ON" : undefined}
+                onClick={() => openSecurityPage("vpn")}
               />
 
 
@@ -2339,32 +2049,6 @@ export default function App() {
             <div className="sidebar-spacer" />
 
 
-            <button
-              className="sidebar-ai-card"
-              onClick={
-                openAI
-              }
-            >
-              <span className="ai-card-icon">
-                <Sparkles
-                  size={17}
-                />
-              </span>
-
-              <div>
-                <strong>
-                  VK AI
-                </strong>
-
-                <span>
-                  Ask anything
-                </span>
-              </div>
-
-              <span className="pulse-dot" />
-            </button>
-
-
             <div className="sidebar-footer">
 
               <div className="network-status">
@@ -2412,22 +2096,22 @@ export default function App() {
 
         <button
           type="button"
-          className={`mobile-nav-action ${page === "search" ? "active" : ""}`}
-          onClick={() => setPage("search")}
-          title="Search"
-          aria-label="Search"
+          className={`mobile-nav-action ${adBlocker ? "active" : ""}`}
+          onClick={toggleAdBlocker}
+          title="Ad blocker"
+          aria-label="Ad blocker"
         >
-          <Search />
+          <ShieldCheck />
         </button>
 
         <button
           type="button"
-          className={`mobile-nav-action ${page === "ai" ? "active" : ""}`}
-          onClick={openAI}
-          title="VK AI"
-          aria-label="VK AI"
+          className={`mobile-nav-action ${vpnConnected ? "active" : ""}`}
+          onClick={toggleVPN}
+          title="VPN"
+          aria-label="VPN"
         >
-          <Sparkles />
+          <Lock />
         </button>
 
         <button
@@ -2764,14 +2448,35 @@ function HomePage({
   setEngine,
   bookmarks,
   onOpen,
-  onAI,
+  adBlocker,
+  vpnConnected,
+  blockedAds,
   onWallpaper,
   onQuickSite,
+  setPageFromHome,
 }) {
   const [time, setTime] =
     useState(
       new Date()
     );
+
+  const [voiceListening, setVoiceListening] =
+    useState(false);
+
+  const [voiceSupported, setVoiceSupported] =
+    useState(true);
+
+  const [voiceError, setVoiceError] =
+    useState("");
+
+  const recognitionRef =
+    useRef(null);
+
+  const onSubmitRef =
+    useRef(onSubmit);
+
+  onSubmitRef.current =
+    onSubmit;
 
   useEffect(() => {
     const timer =
@@ -2788,6 +2493,202 @@ function HomePage({
         timer
       );
   }, []);
+
+  /*
+    Voice search
+    -------------
+    Use the Web Speech API directly from the microphone
+    button click. Do not call getUserMedia() first because
+    doing so can consume the mobile browser's user gesture
+    before SpeechRecognition.start() is called.
+  */
+  useEffect(() => {
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setVoiceSupported(false);
+      return undefined;
+    }
+
+    setVoiceSupported(true);
+
+    const recognition =
+      new SpeechRecognition();
+
+    recognition.lang =
+      navigator.language ||
+      "en-IN";
+
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setVoiceListening(true);
+      setVoiceError("");
+    };
+
+    recognition.onresult = (event) => {
+      let transcript = "";
+
+      for (
+        let index = event.resultIndex;
+        index < event.results.length;
+        index += 1
+      ) {
+        transcript +=
+          event.results[index][0].transcript;
+      }
+
+      transcript =
+        transcript.trim();
+
+      if (!transcript) {
+        return;
+      }
+
+      setQuery(transcript);
+
+      const finalResult =
+        Array.from(event.results)
+          .slice(event.resultIndex)
+          .some(
+            (result) =>
+              result.isFinal
+          );
+
+      if (finalResult) {
+        /*
+          Pass the transcript directly so we do not depend
+          on React state updating before the search starts.
+        */
+        window.setTimeout(() => {
+          onSubmitRef.current?.(
+            null,
+            transcript
+          );
+        }, 0);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      setVoiceListening(false);
+
+      const messages = {
+        "not-allowed":
+          "Microphone permission was denied. Allow microphone access for VK Browser.",
+        "service-not-allowed":
+          "Speech recognition is blocked by this browser.",
+        "audio-capture":
+          "No microphone was found on this device.",
+        "no-speech":
+          "No speech detected. Tap the microphone and speak again.",
+        network:
+          "Voice recognition needs a network connection.",
+        aborted:
+          "Voice search stopped.",
+      };
+
+      setVoiceError(
+        messages[event.error] ||
+        "Voice search could not start."
+      );
+    };
+
+    recognition.onend = () => {
+      setVoiceListening(false);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current =
+      recognition;
+
+    return () => {
+      try {
+        recognition.onstart = null;
+        recognition.onresult = null;
+        recognition.onerror = null;
+        recognition.onend = null;
+        recognition.abort();
+      } catch {
+        // Recognition may already be stopped.
+      }
+
+      if (
+        recognitionRef.current ===
+        recognition
+      ) {
+        recognitionRef.current =
+          null;
+      }
+    };
+  }, []);
+
+  function startVoiceSearch() {
+    if (!voiceSupported) {
+      setVoiceError(
+        "Voice search is not supported in this browser. Try Chrome or Edge over HTTPS."
+      );
+      return;
+    }
+
+    const recognition =
+      recognitionRef.current;
+
+    if (!recognition) {
+      setVoiceError(
+        "Voice search is still starting. Please tap the microphone again."
+      );
+      return;
+    }
+
+    if (voiceListening) {
+      try {
+        recognition.stop();
+      } catch {
+        // Already stopped.
+      }
+      return;
+    }
+
+    setVoiceError("");
+
+    /*
+      IMPORTANT:
+      recognition.start() is called directly from the button
+      click. This is required by several mobile browsers.
+    */
+    try {
+      recognition.start();
+    } catch (error) {
+      if (
+        error?.name ===
+        "InvalidStateError"
+      ) {
+        try {
+          recognition.stop();
+        } catch {
+          // Ignore.
+        }
+
+        window.setTimeout(() => {
+          try {
+            recognition.start();
+          } catch {
+            setVoiceError(
+              "Voice search is already active. Please try again."
+            );
+          }
+        }, 100);
+      } else {
+        setVoiceError(
+          "Unable to start the microphone. Check browser microphone permission."
+        );
+      }
+    }
+  }
 
 
   return (
@@ -2823,8 +2724,8 @@ function HomePage({
 
         <p className="hero-description">
           Search the web, open any website,
-          talk to AI and build your own
-          personal browser space.
+          block common trackers and manage
+          your personal browser security.
         </p>
 
 
@@ -2856,12 +2757,38 @@ function HomePage({
 
             <button
               type="button"
-              className="voice-button"
-              title="Voice search"
+              className={`voice-button ${
+                voiceListening
+                  ? "listening"
+                  : ""
+              }`}
+              onClick={
+                startVoiceSearch
+              }
+              title={
+                voiceListening
+                  ? "Stop voice search"
+                  : "Voice search"
+              }
+              aria-label={
+                voiceListening
+                  ? "Stop voice search"
+                  : "Start voice search"
+              }
+              disabled={
+                !voiceSupported
+              }
             >
               <Mic
                 size={18}
               />
+
+              {voiceListening && (
+                <span
+                  className="voice-listening-dot"
+                  aria-hidden="true"
+                />
+              )}
             </button>
 
             <button
@@ -2881,6 +2808,15 @@ function HomePage({
 
         </form>
 
+        {voiceError && (
+          <div
+            className="voice-search-status"
+            role="status"
+            aria-live="polite"
+          >
+            {voiceError}
+          </div>
+        )}
 
         <div className="search-hint">
           <kbd>Ctrl</kbd>
@@ -2969,22 +2905,22 @@ function HomePage({
           <button
             type="button"
             className="hero-action-card"
-            onClick={() => onAI?.()}
-            aria-label="Open VK AI"
+            onClick={() => setPageFromHome?.("adblock")}
+            aria-label="Open ad blocker"
           >
-            <span className="hero-action-icon ai">
-              <Sparkles
+            <span className="hero-action-icon security">
+              <ShieldCheck
                 size={18}
               />
             </span>
 
             <span>
               <strong>
-                Ask AI
+                Ad Blocker
               </strong>
 
               <small>
-                Chat with your browser
+                {adBlocker ? "Protection enabled" : "Protection paused"}
               </small>
             </span>
 
@@ -3024,40 +2960,32 @@ function HomePage({
         </div>
 
 
-        <div className="ai-status-card">
+        <div className="ai-status-card security-status-card">
 
           <div className="ai-status-icon">
-            <Sparkles
+            <ShieldCheck
               size={16}
             />
           </div>
 
           <div className="ai-status-text">
             <strong>
-              VK AI online
+              Browser security
             </strong>
 
             <span>
-              Your AI workspace is ready.
+              {adBlocker ? "Ad blocker is active." : "Ad blocker is paused."}
             </span>
           </div>
 
           <div className="ai-status-metrics">
             <span>
               <span className="pulse-dot" />
-              ONLINE
+              {adBlocker ? "PROTECTED" : "PAUSED"}
             </span>
 
             <span>
-              {time.toLocaleTimeString(
-                [],
-                {
-                  hour:
-                    "2-digit",
-                  minute:
-                    "2-digit",
-                }
-              )}
+              {blockedAds} blocked
             </span>
           </div>
 
@@ -3446,637 +3374,136 @@ function SearchPage({
 
 
 /* ============================================================
-   AI PAGE
+   SECURITY PAGE
    ============================================================ */
 
-function AIPage({
-  provider,
-  model,
-  setModel,
-  messages,
-  input,
-  setInput,
-  loading,
-  onSubmit,
-  onNewChat,
-  onCopy,
-  copiedId,
-  onRegenerate,
-  voice,
-  toggleVoice,
-  inputRef,
-  temperature,
-  setTemperature,
+function SecurityPage({
+  mode,
+  adBlocker,
+  setAdBlocker,
+  vpnConnected,
+  setVpnConnected,
+  blockedAds,
+  onToggleAdBlocker,
+  onToggleVPN,
 }) {
-  const bottomRef =
-    useRef(null);
-
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({
-      behavior:
-        "smooth",
-    });
-  }, [
-    messages,
-    loading,
-  ]);
-
+  const isAdBlock = mode === "adblock";
 
   return (
-    <section className="ai-page">
+    <section className="content-page">
+      <div className="page-header">
+        <div className="page-header-copy">
+          <div className="page-title-row">
+            {isAdBlock ? <ShieldCheck size={24} /> : <Lock size={24} />}
+            <h1>{isAdBlock ? "Ad Blocker" : "VPN"}</h1>
+          </div>
+          <p>
+            {isAdBlock
+              ? "Reduce common advertising and tracking destinations while you browse."
+              : "Manage VPN privacy controls for VK Browser."}
+          </p>
+        </div>
+      </div>
 
-      <div className="ai-workspace">
-
-        {/* ====================================================
-            AI HEADER
-            ==================================================== */}
-
-        <header className="ai-header">
-
-          <div className="ai-header-brand">
-
-            <div className="ai-brand-icon">
-              <Sparkles
-                size={20}
-              />
+      <div className="settings-layout">
+        <div className="settings-card">
+          <div className="settings-card-header">
+            <div className="settings-icon">
+              {isAdBlock ? <ShieldCheck size={17} /> : <Lock size={17} />}
             </div>
-
             <div>
-              <strong>
-                VK AI
-              </strong>
-
-              <span>
-                 VK AI inside your browser
-              </span>
-            </div>
-
-          </div>
-
-
-          <div className="ai-header-actions">
-
-            <div className="chatgpt-only-badge">
-              <span className="chatgpt-only-icon">
-                <Bot size={15} />
-              </span>
-              <span>
-                <strong>VK AI</strong>
-                <small></small>
-              </span>
-              <span className="chatgpt-online-dot" />
-            </div>
-
-
-            <button
-              className="ai-new-chat"
-              onClick={
-                onNewChat
-              }
-              title="New chat"
-            >
-              <Plus
-                size={16}
-              />
-
-              <span>
-                New chat
-              </span>
-            </button>
-
-          </div>
-
-        </header>
-
-
-        {/* ====================================================
-            AI CHAT
-            ==================================================== */}
-
-        <div className="ai-chat-area">
-
-          {messages.length ===
-          0 ? (
-            <div className="ai-empty">
-
-              <div className="ai-orb">
-
-                <div className="ai-orb-ring ring-one" />
-
-                <div className="ai-orb-ring ring-two" />
-
-                <div className="ai-orb-core">
-                  <Sparkles
-                    size={30}
-                  />
-                </div>
-
-              </div>
-
-
-              <span className="ai-empty-kicker">
-                VK AI
-              </span>
-
-              <h1>
-                What can I help
-                you explore?
-              </h1>
-
+              <h2>{isAdBlock ? "Ad blocking" : "VPN control"}</h2>
               <p>
-                Ask questions, write,
-                code, learn, plan or
-                explore ideas without
-                leaving your browser.
+                {isAdBlock
+                  ? "Filter known advertising and tracking destinations before navigation."
+                  : "Control the browser-side VPN state and connection guidance."}
               </p>
+            </div>
+          </div>
 
+          {isAdBlock ? (
+            <>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={onToggleAdBlocker}
+              >
+                <ShieldCheck size={14} />
+                {adBlocker ? "Disable ad blocker" : "Enable ad blocker"}
+              </button>
 
-              <div className="ai-suggestion-grid">
-
-                <AISuggestion
-                  icon={<CodeIcon />}
-                  title="Build something"
-                  text="Create code or design a project."
-                  onClick={() =>
-                    setInput(
-                      "Help me build a modern web application."
-                    )
-                  }
-                />
-
-                <AISuggestion
-                  icon={<Brain />}
-                  title="Learn"
-                  text="Explain a difficult topic."
-                  onClick={() =>
-                    setInput(
-                      "Explain a difficult topic to me in a simple way."
-                    )
-                  }
-                />
-
-                <AISuggestion
-                  icon={<Palette />}
-                  title="Create"
-                  text="Develop an idea or design."
-                  onClick={() =>
-                    setInput(
-                      "Help me create a futuristic product idea."
-                    )
-                  }
-                />
-
-                <AISuggestion
-                  icon={<Globe />}
-                  title="Explore"
-                  text="Understand something new."
-                  onClick={() =>
-                    setInput(
-                      "Give me a detailed explanation of something interesting."
-                    )
-                  }
-                />
-
+              <div className="chatgpt-settings-badge">
+                <span className="chatgpt-settings-icon">
+                  <ShieldCheck size={16} />
+                </span>
+                <span>
+                  <strong>{adBlocker ? "Ad blocker active" : "Ad blocker paused"}</strong>
+                  <small>{blockedAds} destinations filtered this session</small>
+                </span>
+                <span className="chatgpt-online-dot" />
               </div>
 
-            </div>
+              <p className="settings-note">
+                This web version can filter known ad/tracker destinations and search results. It cannot remove every advertisement from a third-party website after that website is opened in the normal browser.
+              </p>
+            </>
           ) : (
-            <div className="ai-message-list">
+            <>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={onToggleVPN}
+              >
+                <Lock size={14} />
+                {vpnConnected ? "Turn VPN control off" : "Turn VPN control on"}
+              </button>
 
-              {messages.map(
-                (message) => (
-                  <AIMessage
-                    key={
-                      message.id
-                    }
-                    message={
-                      message
-                    }
-                    provider={
-                      provider
-                    }
-                    onCopy={
-                      onCopy
-                    }
-                    copiedId={
-                      copiedId
-                    }
-                  />
-                )
-              )}
+              <div className="chatgpt-settings-badge">
+                <span className="chatgpt-settings-icon">
+                  <Lock size={16} />
+                </span>
+                <span>
+                  <strong>{vpnConnected ? "VPN control enabled" : "VPN control disabled"}</strong>
+                  <small>Browser privacy control</small>
+                </span>
+                <span className="chatgpt-online-dot" />
+              </div>
 
-
-              {loading && (
-                <div className="ai-message assistant">
-
-                  <div className="ai-message-avatar">
-                    <Sparkles
-                      size={15}
-                    />
-                  </div>
-
-                  <div className="ai-message-content">
-
-                    <div className="ai-message-name">
-                      VK AI
-                    </div>
-
-                    <div className="ai-thinking">
-
-                      <span />
-                      <span />
-                      <span />
-
-                      <small>
-                        Thinking...
-                      </small>
-
-                    </div>
-
-                  </div>
-
-                </div>
-              )}
-
-              <div
-                ref={
-                  bottomRef
-                }
-              />
-
-            </div>
+              <p className="settings-note">
+                A website cannot create a device-wide VPN tunnel by itself. For real encrypted traffic routing, connect a VPN provider or your device's VPN service.
+              </p>
+            </>
           )}
-
         </div>
 
-
-        {/* ====================================================
-            AI INPUT
-            ==================================================== */}
-
-        <div className="ai-composer-area">
-
-          {messages.length >
-            0 && (
-            <button
-              className="ai-regenerate"
-              onClick={
-                onRegenerate
-              }
-              disabled={
-                loading
-              }
-            >
-              <RefreshCw
-                size={13}
-              />
-
-              Regenerate
-            </button>
-          )}
-
-
-          <form
-            className="ai-composer"
-            onSubmit={
-              onSubmit
-            }
-          >
-
-            <button
-              type="button"
-              className="ai-composer-tool"
-              title="Attach"
-            >
-              <Upload
-                size={17}
-              />
-            </button>
-
-
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(
-                event
-              ) =>
-                setInput(
-                  event.target.value
-                )
-              }
-              onKeyDown={(
-                event
-              ) => {
-                if (
-                  event.key ===
-                    "Enter" &&
-                  !event.shiftKey
-                ) {
-                  event.preventDefault();
-
-                  onSubmit();
-                }
-              }}
-              placeholder="Message VK AI..."
-              rows={1}
-            />
-
-
-            <button
-              type="button"
-              className={`ai-composer-tool ${
-                voice
-                  ? "active"
-                  : ""
-              }`}
-              onClick={
-                toggleVoice
-              }
-              title="Voice"
-            >
-              <Mic
-                size={17}
-              />
-            </button>
-
-
-            <button
-              type="submit"
-              className="ai-send"
-              disabled={
-                loading ||
-                !input.trim()
-              }
-              title="Send"
-            >
-              <Send
-                size={17}
-              />
-            </button>
-
-          </form>
-
-
-          <div className="ai-composer-footer">
-
+        <div className="settings-card">
+          <div className="settings-card-header">
+            <div className="settings-icon">
+              <ShieldCheck size={17} />
+            </div>
             <div>
-              <span>
-                <Lock
-                  size={10}
-                />
-                Private interface
-              </span>
-
-              <span>
-                Model:
-                {" "}
-                {model}
-              </span>
+              <h2>Security status</h2>
+              <p>Current VK Browser privacy controls.</p>
             </div>
-
-
-            <label className="temperature-control">
-
-              Creativity
-
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={
-                  temperature
-                }
-                onChange={(
-                  event
-                ) =>
-                  setTemperature(
-                    Number(
-                      event.target
-                        .value
-                    )
-                  )
-                }
-              />
-
-              <span>
-                {temperature.toFixed(
-                  1
-                )}
-              </span>
-
-            </label>
-
           </div>
 
+          <div className="protection-grid">
+            <ProtectionCard
+              icon={<ShieldCheck />}
+              title="Ad blocker"
+              description="Known advertising and tracker destinations."
+              active={adBlocker}
+            />
+            <ProtectionCard
+              icon={<Lock />}
+              title="VPN control"
+              description="Browser-side VPN state and guidance."
+              active={vpnConnected}
+            />
+          </div>
         </div>
-
       </div>
-
     </section>
-  );
-}
-
-
-/* ============================================================
-   AI SUGGESTION
-   ============================================================ */
-
-function AISuggestion({
-  icon,
-  title,
-  text,
-  onClick,
-}) {
-  return (
-    <button
-      className="ai-suggestion"
-      onClick={onClick}
-    >
-      <span className="ai-suggestion-icon">
-        {React.cloneElement(
-          icon,
-          {
-            size: 16,
-          }
-        )}
-      </span>
-
-      <span>
-        <strong>
-          {title}
-        </strong>
-
-        <small>
-          {text}
-        </small>
-      </span>
-
-      <ArrowRight
-        size={13}
-      />
-    </button>
-  );
-}
-
-
-/* ============================================================
-   AI MESSAGE
-   ============================================================ */
-
-function AIMessage({
-  message,
-  provider,
-  onCopy,
-  copiedId,
-}) {
-  const isUser =
-    message.role ===
-    "user";
-
-  return (
-    <div
-      className={`ai-message ${
-        isUser
-          ? "user"
-          : "assistant"
-      }`}
-    >
-
-      <div className="ai-message-avatar">
-
-        {isUser ? (
-          <User
-            size={15}
-          />
-        ) : (
-          <Sparkles
-            size={15}
-          />
-        )}
-
-      </div>
-
-
-      <div className="ai-message-content">
-
-        <div className="ai-message-name">
-          {isUser
-            ? "You"
-            : provider.name}
-        </div>
-
-
-        <div
-          className={`ai-message-bubble ${
-            message.error
-              ? "error"
-              : ""
-          }`}
-        >
-          {formatAIText(
-            message.content
-          )}
-        </div>
-
-
-        {!isUser && (
-          <div className="ai-message-tools">
-
-            <button
-              onClick={() =>
-                onCopy(
-                  message
-                )
-              }
-            >
-              {copiedId ===
-              message.id ? (
-                <Check
-                  size={12}
-                />
-              ) : (
-                <Copy
-                  size={12}
-                />
-              )}
-
-              {copiedId ===
-              message.id
-                ? "Copied"
-                : "Copy"}
-            </button>
-
-          </div>
-        )}
-
-      </div>
-
-    </div>
-  );
-}
-
-
-/* ============================================================
-   AI TEXT FORMATTER
-   ============================================================ */
-
-function formatAIText(
-  text
-) {
-  if (!text) {
-    return null;
-  }
-
-  const lines =
-    String(text).split(
-      "\n"
-    );
-
-  return lines.map(
-    (line, index) => {
-      const code =
-        line.startsWith(
-          "```"
-        );
-
-      if (code) {
-        return null;
-      }
-
-      return (
-        <React.Fragment
-          key={index}
-        >
-          {line}
-
-          {index <
-            lines.length -
-              1 && (
-            <br />
-          )}
-        </React.Fragment>
-      );
-    }
-  );
-}
-
-
-/* ============================================================
-   CODE ICON
-   ============================================================ */
-
-function CodeIcon() {
-  return (
-    <span
-      style={{
-        fontWeight: 900,
-        fontSize: 15,
-      }}
-    >
-      {"</>"}
-    </span>
   );
 }
 
@@ -4608,11 +4035,11 @@ function SettingsPage({
   setWallpaperOpacity,
   openWallpaperPicker,
   removeWallpaper,
-  aiProvider,
-  setAiProvider,
-  aiModel,
-  setAiModel,
-  onOpenAI,
+  adBlocker,
+  setAdBlocker,
+  vpnConnected,
+  setVpnConnected,
+  blockedAds,
 }) {
   return (
     <section className="content-page">
@@ -4715,59 +4142,57 @@ function SettingsPage({
           <div className="settings-card-header">
 
             <div className="settings-icon">
-              <Sparkles
+              <ShieldCheck
                 size={17}
               />
             </div>
 
             <div>
               <h2>
-                VK AI
+                Security
               </h2>
 
               <p>
-                Choose which model your VK AI interface uses.
+                Control ad blocking and VPN privacy features.
               </p>
             </div>
 
           </div>
 
-
           <div className="chatgpt-settings-actions">
-
             <button
               type="button"
               className="secondary-button"
-              onClick={() =>
-                setAiModel("gpt-5.6-sol")
-              }
+              onClick={() => setAdBlocker((current) => !current)}
             >
-              <Check size={13} />
-              Use GPT-5.6 Sol
+              <ShieldCheck size={13} />
+              Ad blocker {adBlocker ? "On" : "Off"}
             </button>
 
             <button
               type="button"
               className="primary-button"
-              onClick={onOpenAI}
+              onClick={() => setVpnConnected((current) => !current)}
             >
-              <Bot size={13} />
-              Open VK AI
+              <Lock size={13} />
+              VPN {vpnConnected ? "On" : "Off"}
             </button>
-
           </div>
-
 
           <div className="chatgpt-settings-badge">
             <span className="chatgpt-settings-icon">
-              <Bot size={16} />
+              <ShieldCheck size={16} />
             </span>
             <span>
-              <strong>VK AI</strong>
-              <small>OpenAI · {aiModel || "gpt-5.6-sol"}</small>
+              <strong>{adBlocker ? "Protection active" : "Protection paused"}</strong>
+              <small>{blockedAds} advertising/tracking destinations blocked</small>
             </span>
             <span className="chatgpt-online-dot" />
           </div>
+
+          <p className="settings-note">
+            VPN note: a normal web app cannot create a device-wide encrypted VPN tunnel. The VPN control here manages the browser privacy state; a real tunnel requires a VPN provider or operating-system VPN service.
+          </p>
 
         </div>
 
@@ -5057,7 +4482,7 @@ function SettingsPage({
               </h2>
 
               <p>
-                Ctrl + L address bar · Ctrl + T new tab · Ctrl + W close tab · Ctrl + K command center · Ctrl + Shift + A AI
+                Ctrl + L address bar · Ctrl + T new tab · Ctrl + W close tab · Ctrl + K command center
               </p>
             </div>
 
@@ -5123,11 +4548,11 @@ function SettingsPage({
 
             <div className="metric">
               <span>
-                AI
+                Security
               </span>
 
               <strong>
-                Ready
+                {adBlocker ? "Protected" : "Paused"}
               </strong>
             </div>
 
